@@ -88,14 +88,37 @@ model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(3, activation='softmax')
 ])
 
+# Makes the model stop at 95% accuracy
+class StoppingCallback(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs={}):
+        if (logs.get('accuracy') >= 0.95):
+            self.model.stop_training = True
+
+callbacks = StoppingCallback()
+
 # Final model has the augmentation and the original model
 final_model = tf.keras.models.Sequential([
     data_augmentation,
     model
 ])
 
+# Compiling the model on a loss, optimizer, and metric
 final_model.compile(loss='categorical_crossentropy',
               optimizer=tf.keras.optimizers.RMSprop(learning_rate=0.001),
               metrics=['accuracy'])
 
-final_model.fit(train, epochs=num_epochs, validation_data=validation, verbose=2)
+# Fitting the model on the train and validation sets
+model_perform = final_model.fit(train, epochs=num_epochs, validation_data=validation, verbose=2)
+
+# Method to see model's accuracy and validation accuracy
+def plot_performance(model, metric):
+    plt.plot(model.history[metric])
+    plt.plot(model.history['val'+ metric])
+    plt.xlabel("Epochs")
+    plt.ylabel(metric)
+    plt.legens([metric, 'val' + metric])
+    plt.show()
+
+# Calling the model performance functions
+plot_performance(model_perform, "accuracy")
+plot_performance(model_perform, "loss")
